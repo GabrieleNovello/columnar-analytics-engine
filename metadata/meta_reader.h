@@ -3,14 +3,14 @@
 #include <cstdint>
 #include <vector>
 
-#include "schema.h"
+#include "ingestion/schema.h"
 
 
 struct ColumnMeta
 {
     ColumnType type_;
     bool       nullable_;
-    uint32_t   column_id;
+    uint32_t   column_id_;
 };
 
 

@@ -4,6 +4,7 @@
 #include "csv_reader.h"
 #include "column_loader.h"
 #include "column_writer.h"
+#include "metadata/meta_writer.h"
 
 
 int main(int argc, char** argv)
@@ -49,6 +50,14 @@ int main(int argc, char** argv)
     if (!writer.write_all(schema, loader.columns(), loader.row_count()))
     {
         std::cerr << "Failed to write column files\n";
+        return 1;
+    }
+
+    MetaWriter meta_writer;
+
+    if (!meta_writer.write("data/test_table/meta.bin", schema, loader.row_count()))
+    {
+        std::cerr << "Failed to write meta.bin\n";
         return 1;
     }
 

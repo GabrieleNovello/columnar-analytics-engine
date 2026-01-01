@@ -1,6 +1,6 @@
 #pragma once
 
-#include "schema.h"
+#include "ingestion/schema.h"
 #include <cstdint>
 
 
