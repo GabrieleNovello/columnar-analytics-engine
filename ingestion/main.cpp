@@ -1,11 +1,10 @@
 #include <iostream>
 
-#include "schema.h"
-#include "csv_reader.h"
-#include "column_loader.h"
-#include "column_writer.h"
+#include "ingestion/schema.h"
+#include "ingestion/csv_reader.h"
+#include "ingestion/column_loader.h"
+#include "ingestion/column_writer.h"
 #include "metadata/meta_writer.h"
-
 
 int main(int argc, char** argv)
 {
@@ -18,46 +17,40 @@ int main(int argc, char** argv)
     const char* csv_path = argv[1];
     const char* out_dir  = argv[2];
 
-
-    // Stage 1 pipeline testing (hardcoded)
-
-    // 1 : Define schema
-
+    // 1. Define schema
     Schema schema;
-    schema.columns_.push_back({"id",    ColumnType::INT64,  false});
-    schema.columns_.push_back({"value", ColumnType::DOUBLE, true});
+    schema.columns_.push_back({ "id",    ColumnType::INT64,  false });
+    schema.columns_.push_back({ "value", ColumnType::DOUBLE, true  });
 
-    // 2 : Open CSV
+    // 2. Open CSV
     CSVReader reader(csv_path);
 
-    // 3 : Load columns
+    // 3. Load columns
     ColumnLoader loader(schema);
     LoadStatus status = loader.load(reader);
 
     if (status != LoadStatus::OK)
     {
         const ParseError& err = loader.error();
-
         std::cerr << "Parse error at row " << err.row_
                   << ", column " << err.column_
                   << ", token \"" << err.token_ << "\"\n";
         return 1;
     }
 
-    // 4 : Write columns to disk
+    // 4. Write column files
     ColumnWriter writer(out_dir);
-
     if (!writer.write_all(schema, loader.columns(), loader.row_count()))
     {
         std::cerr << "Failed to write column files\n";
         return 1;
     }
 
+    // 5. Write table metadata (FIX)
     MetaWriter meta_writer;
-
-    if (!meta_writer.write("data/test_table/meta.bin", schema, loader.row_count()))
+    if (!meta_writer.write("out/table.meta", schema, loader.row_count()))
     {
-        std::cerr << "Failed to write meta.bin\n";
+        std::cerr << "Failed to write table.meta\n";
         return 1;
     }
 
@@ -65,5 +58,4 @@ int main(int argc, char** argv)
               << loader.row_count() << "\n";
 
     return 0;
-
 }
