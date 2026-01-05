@@ -1,14 +1,10 @@
 #include <iostream>
 #include <cstdlib>
 #include <cerrno>
-#include <cstring>
 
 #include "metadata/meta_reader.h"
 #include "execution/column_reader.h"
-#include "execution/column_scan.h"
-#include "execution/aggregate.h"
-#include "execution/batch.h"
-#include "execution/predicate_filter.h"
+#include "execution/pipeline.h"
 
 static bool parse_double(const char* s, double& out)
 {
@@ -52,48 +48,10 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    ColumnScan scan(reader);
-    PredicateFilter filter(threshold);
+    Pipeline pipeline(reader, threshold);
+    pipeline.run();
 
-    CountAggregate count;
-    SumAggregate   sum;
-
-    if (reader.type() == ColumnType::INT64)
-    {
-        int64_t in_values[BATCH_SIZE];
-        uint8_t in_nulls[BATCH_SIZE];
-        Batch<int64_t> in_batch { in_values, in_nulls, 0 };
-
-        int64_t out_values[BATCH_SIZE];
-        uint8_t out_nulls[BATCH_SIZE];
-        Batch<int64_t> out_batch { out_values, out_nulls, 0 };
-
-        while (scan.next_i64(in_batch))
-        {
-            filter.apply_i64(in_batch, out_batch);
-            count.consume(out_batch);
-            sum.consume(out_batch);
-        }
-    }
-    else
-    {
-        double  in_values[BATCH_SIZE];
-        uint8_t in_nulls[BATCH_SIZE];
-        Batch<double> in_batch { in_values, in_nulls, 0 };
-
-        double  out_values[BATCH_SIZE];
-        uint8_t out_nulls[BATCH_SIZE];
-        Batch<double> out_batch { out_values, out_nulls, 0 };
-
-        while (scan.next_f64(in_batch))
-        {
-            filter.apply_f64(in_batch, out_batch);
-            count.consume(out_batch);
-            sum.consume(out_batch);
-        }
-    }
-
-    std::cout << "COUNT = " << count.result() << "\n";
-    std::cout << "SUM   = " << sum.result() << "\n";
+    std::cout << "COUNT = " << pipeline.count() << "\n";
+    std::cout << "SUM   = " << pipeline.sum() << "\n";
     return 0;
 }
