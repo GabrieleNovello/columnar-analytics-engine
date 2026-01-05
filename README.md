@@ -177,6 +177,13 @@ Scalar logic is applied over column vectors.
 
 ---
 
+## Build Notes
+
+The provided Makefile targets Windows (PowerShell + MinGW).
+The `clean` target uses `del /Q`
+
+---
+
 ## Non-Goals
 
 This project does not include:
